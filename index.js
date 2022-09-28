@@ -247,7 +247,7 @@ hexo.extend.filter.register(
             // 附件
           }
         } else {
-          content = content.replaceAll("!"+item, assetMaps.get(assetMaps)).replaceAll(item, assetMaps.get(assetMaps));
+          content = content.replaceAll("!"+item, assetMaps.get(item)).replaceAll(item, assetMaps.get(item));
         }
       }
     }
