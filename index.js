@@ -1,9 +1,9 @@
 "use strict";
 
 const log = require("hexo-log")({
-    debug: false,
-    silent: false
-  })
+  debug: false,
+  silent: false,
+});
 const hexoFs = require("hexo-fs");
 const fs = require("fs");
 const path = require("path");
@@ -116,19 +116,24 @@ hexo.extend.filter.register(
       mdMatches = unique(mdMatches);
       for (const item of mdMatches) {
         // 过滤正常链接
-        const mdLink = regexMdLink.exec(item)
-        if(!mdLink){
-            log.error("%s format err", item)
+        const mdLink = regexMdLink.exec(item);
+        if (!mdLink) {
+          log.error("%s format err", item);
         }
         const title = mdLink[1];
         if (/^http/.test(mdLink[2])) {
-            continue;
+          continue;
+        }
+        if(!data.source.toLowerCase().endsWith(".md")){
+          continue;
         }
 
         // const title = item.match(regexMdTitle);
         let text = item.match(regexParenthesis)[1];
-        if(text.startsWith("../")){
-            text = path.resolve(data.slug, "../"+text).replace(this.base_dir, "")
+        if (text.startsWith("../")) {
+          text = path
+            .resolve(data.slug, "../" + text)
+            .replace(this.base_dir, "");
         }
         text = decodeURI(text);
 
@@ -137,10 +142,13 @@ hexo.extend.filter.register(
           realFilePath = allFile.find((file) => file.fileName === text);
         }
         if(!realFilePath){
-            realFilePath = allFile.find((file)=>file.filePath === path.resolve(data.slug, "../"+text).replace(this.base_dir, ""))
+          realFilePath = allFile.find((file) => path.resolve(data.full_source, "../"+text).indexOf(file.filePath) > 0)
         }
-        if(!realFilePath){
-            log.error("file: %s  asset: %s not found", item, text)
+        if(!realFilePath && data.slug){
+          realFilePath = allFile.find((file)=>file.filePath === path.resolve(data.slug, "../"+text).replace(this.base_dir, ""))
+        }
+        if (!realFilePath) {
+          log.error("file: %s asset: %s path: %s not found", item, text, data.full_source)
         }
 
         if (realFilePath) {
@@ -150,7 +158,9 @@ hexo.extend.filter.register(
             const extension = matches[2];
             if (extension == "md") {
               const postLink = `<a href="/${realFilePath.info.path}">${title}</a>`;
-              content = content.replaceAll("!"+item, postLink).replaceAll(item, postLink);
+              content = content
+                .replaceAll("!" + item, postLink)
+                .replaceAll(item, postLink);
             } else {
               // 附件
               // const assetLink = `{% asset_link ${filename} %}`
@@ -182,11 +192,11 @@ hexo.extend.filter.register(
     }
 
     const assetFile = function (path, title, extension) {
-        if ([".mp4", ".webm", ".ogg"].includes(extension)) {
-        return `<img src="www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png" alt="${title}">`
-        } else {
-            return `<img src="${path}" alt="${title}">`
-        }
+      if ([".mp4", ".webm", ".ogg"].includes(extension)) {
+        return `<img src="www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png" alt="${title}">`;
+      } else {
+        return `<img src="${path}" alt="${title}">`;
+      }
     };
 
     const allFile = hexo.allFile;
@@ -210,13 +220,16 @@ hexo.extend.filter.register(
       mdMatches = unique(mdMatches);
       for (const item of mdMatches) {
         // 过滤正常链接
-        const mdLink = regexMdLink.exec(item)
-        if(!mdLink){
-            log.error("%s format err", item)
+        const mdLink = regexMdLink.exec(item);
+        if (!mdLink) {
+          log.error("%s format err", item);
         }
         const title = mdLink[1];
         if (/^http/.test(mdLink[2])) {
-            continue;
+          continue;
+        }
+        if(!data.source.toLowerCase().endsWith(".md")){
+          continue;
         }
 
         let text = item.match(regexParenthesis)[1];
@@ -227,27 +240,44 @@ hexo.extend.filter.register(
           realFilePath = allFile.find((file) => file.fileName === text);
         }
         if(!realFilePath){
-            realFilePath = allFile.find((file)=>file.filePath === path.resolve(data.slug, "../"+text).replace(this.base_dir, ""))
+          realFilePath = allFile.find((file) => path.resolve(data.full_source, "../"+text).indexOf(file.filePath) > 0)
         }
-        if(!realFilePath){
-            log.error("file: %s  asset: %s not found", item, text)
+        if(!realFilePath && data.slug){
+          realFilePath = allFile.find((file)=>file.filePath === path.resolve(data.slug, "../"+text).replace(this.base_dir, ""))
+        }
+        if (!realFilePath) {
+          log.error("file: %s asset: %s path: %s not found", item, text, data.full_source)
         }
 
         if (!assetMaps.has(item)) {
           const matches = text.match(regexHasExtension);
-          if(!matches){
-            log.error("%s %s no extension", text)
+          if (!matches) {
+            log.error("%s %s no extension", text);
           }
           const extension = matches[2];
           if (realFilePath) {
-            hexoFs.copyFile(assetSource+realFilePath.filePath,path.join(dir_images, path.basename(realFilePath.fileName)));
-            const href = assetFile(`/${data.path +encodeURI("images/" + path.basename(realFilePath.fileName))}`,title, extension);
-            content = content.replaceAll("!"+item, href).replaceAll(item, href);
+            hexoFs.copyFile(
+              assetSource + realFilePath.filePath,
+              path.join(dir_images, path.basename(realFilePath.fileName))
+            );
+            const href = assetFile(
+              `/${
+                data.path +
+                encodeURI("images/" + path.basename(realFilePath.fileName))
+              }`,
+              title,
+              extension
+            );
+            content = content
+              .replaceAll("!" + item, href)
+              .replaceAll(item, href);
             assetMaps.set(item, href);
             // 附件
           }
         } else {
-          content = content.replaceAll("!"+item, assetMaps.get(item)).replaceAll(item, assetMaps.get(item));
+          content = content
+            .replaceAll("!" + item, assetMaps.get(item))
+            .replaceAll(item, assetMaps.get(item));
         }
       }
     }
