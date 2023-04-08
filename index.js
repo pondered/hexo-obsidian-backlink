@@ -63,15 +63,19 @@ hexo.extend.filter.register(
         return arr.indexOf(item, 0) === index;
       });
     }
+    //
     const regexHasExtension = /^([^\\]*)\.(\w+)$/;
+    //
     const regexWiki = /\[\[([^\]]+)\]\]/;
+    // 
     const regexWikiGlobal = /\[\[([^\]]*)\]\]/g;
+    // 正则忽略内容
+    const ignoreReg = /[\r\n]+/g;
 
     let content = data.content;
     let wikiMatches = content.match(regexWikiGlobal);
 
-    if (wikiMatches) {
-      wikiMatches = unique(wikiMatches);
+    if (wikiMatches && !wikiMatches[0].match(ignoreReg)) {
       for (const item of wikiMatches) {
         let text = item.match(regexWiki)[1];
         const matches = text.match(regexHasExtension);
