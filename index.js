@@ -256,7 +256,8 @@ hexo.extend.filter.register(
         if (!assetMaps.has(item)) {
           const matches = text.match(regexHasExtension);
           if (!matches) {
-            log.error("%s %s no extension", text);
+            continue
+            // log.error("%s %s no extension", text);
           }
           const extension = matches[2];
           if (realFilePath) {
